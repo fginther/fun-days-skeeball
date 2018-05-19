@@ -2,6 +2,7 @@
 Cortex is the event handler and dispatcher.
 '''
 import logging
+import display
 import machine
 import game
 from tests import fake_gpio
@@ -21,18 +22,21 @@ class OperationMode(object):
 class Cortex(object):
     # XXX: This constants need to go somewhere else
     POST_PLAY_TIMEOUT = None
-    LAST_BALL = None
     TARGET_EVENT = pygame.USEREVENT
     START_EVENT = pygame.USEREVENT + 1
+    END_EVENT = pygame.USEREVENT + 2
     
-    def __init__(self):
+    def __init__(self, config):
         '''Initialize the Cortex.'''
         logging.basicConfig(format='%(asctime)s %(message)s')
+        self.config = config
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.INFO)
         self.mode = OperationMode.ATTRACT
         self.game = game.Game()
-        self.machine = machine.Machine(fake_gpio.FakeGPIO())
+        #self.machine = machine.Machine(fake_gpio.FakeGPIO())
+        self.machine = machine.Machine()
+        self.display = display.Display(config, False)
 
         # Configure the targets and their event handlers
         self.targets = []
@@ -50,6 +54,8 @@ class Cortex(object):
         start_event = self.START_EVENT
         self.start_button = self.machine.create_trigger('start', -1, start_event, 0)
         self.log(logging.INFO, 'start_button: {}'.format(self.start_button))
+        self.end_event = pygame.event.Event(self.END_EVENT)
+        self.log(logging.INFO, 'end_event: {}'.format(self.end_event))
         pygame.init()
 
     def log(self, level, msg):
@@ -64,13 +70,17 @@ class Cortex(object):
         # Display the new game screen
         # Release the balls
         self.log(logging.INFO, 'play triggered')
-        self.mode = OperationMode.PLAY
+        self.game.start_game()
+        self.display.show_score(self.game.score)
         self.machine.release_balls()
         self.machine.hold_balls()
+        self.mode = OperationMode.PLAY
 
     def post_play(self):
         '''Start the post play period, presenting the last score.'''
-        # Display current score
+        self.log(logging.INFO, 'post_play triggered')
+        self.mode = OperationMode.POST_PLAY
+        self.display.show_final_score(self.game.score)
         # Display current ranking
         pass
 
@@ -82,15 +92,14 @@ class Cortex(object):
 
     def hit_target(self, event):
         '''Handler for processing target events.'''
-        # Lookup the event in a game table
-        # Increment the score by the value
         self.game.drop_ball(event.sub[0])
+        self.display.show_score(self.game.score)
         points = event.sub[1]
         self.log(logging.INFO, 'Points: {}'.format(points))
         self.log(logging.INFO, 'Score: {}'.format(self.game.score))
         if self.game.check_game_over():
-            self.mode = OperationMode.POST_PLAY
-        return
+            self.log(logging.INFO, 'Posting end_event')
+            pygame.event.post(self.end_event)
 
     def event_loop(self):
         '''The pygame event loop.'''
@@ -108,14 +117,14 @@ class Cortex(object):
                 if event.type == pygame.KEYDOWN:
                     self.log(logging.INFO, 'Event key: {}'.format(event.key))
                     if event.key == ord(' '):
-                        self.start_button.callback()
+                        self.start_button.callback(None)
                         continue
                     if event.key > ord('9'):
                         return
                     if event.key < ord('0'):
                         return
                     event_no = event.key - ord('0')
-                    self.targets[event_no].callback()
+                    self.targets[event_no].callback(None)
                     continue
                 if event.type == pygame.KEYUP:
                     continue
@@ -128,14 +137,14 @@ class Cortex(object):
                         self.play()
                         continue
                 if self.mode == OperationMode.POST_PLAY:
-                    if event.type == self.START_GAME:
+                    if event.type == self.START_EVENT:
                         self.play()
                         continue
                     if event.type == self.POST_PLAY_TIMEOUT:
                         self.attract()
                         continue
                 if self.mode == OperationMode.PLAY:
-                    if event.type == self.LAST_BALL:
+                    if event.type == self.END_EVENT:
                         self.post_play()
                         continue
                     if event.type == self.TARGET_EVENT:

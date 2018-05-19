@@ -5,10 +5,11 @@ import pygame
 try:
     import RPi.GPIO as GPIO
 except RuntimeError:
+    raise
     # This module can't be imported, assume running in test context
     GPIO = None
 
-DEFAULT_BOUNCETIME = 1000
+DEFAULT_BOUNCETIME = 200
 
 
 class Machine(object):
@@ -26,6 +27,7 @@ class Machine(object):
         self.gpio.setwarnings(False)
         self.log(logging.INFO, 'Machine setup complete.')
         self.triggers = []
+        self.log(logging.INFO, 'GPIO: {}'.format(self.gpio))
 
     def log(self, level, msg):
         '''Machine specific event logger.'''
@@ -72,8 +74,9 @@ class Trigger(object):
         '''Trigger specific event logger.'''
         self.logger.log(level, msg)
 
-    def callback(self):
+    def callback(self, data):
         '''GPIO event callback.'''
         self.log(logging.INFO, 'GPIO callback: {}'.format(self.name))
         self.log(logging.INFO, 'Event: {}'.format(self.event))
+        self.log(logging.INFO, 'Data: {}'.format(data))
         pygame.event.post(self.event)

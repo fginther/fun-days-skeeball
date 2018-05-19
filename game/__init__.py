@@ -24,9 +24,7 @@ class Game(object):
         self.logger.setLevel(logging.INFO)
         self.log(logging.INFO, 'Game setup begin.')
         self.targets = self.MIDWAY
-        self.score = 0
-        self.remaining_balls = 9
-        self.game_over = False
+        self.start_game()
         self.log(logging.INFO, 'Game setup complete.')
 
     def log(self, level, msg):
@@ -47,7 +45,6 @@ class Game(object):
         value = self.get_target_value(target)
         self.score += value
         self.remaining_balls -= 1
-        self.check_game_over()
         self.log(logging.INFO, 'Score is now {} ({})'.format(value, self.score))
         self.log(logging.INFO, 'Remaining balls: {}'.format(self.remaining_balls))
 
@@ -56,3 +53,11 @@ class Game(object):
         if self.remaining_balls == 0:
             self.game_over = True
             self.log(logging.INFO, 'Game is over.')
+            return True
+        return False
+
+    def start_game(self):
+        self.score = 0
+        self.remaining_balls = 9
+        self.game_over = False
+        self.log(logging.INFO, 'Game is ready to start.')
