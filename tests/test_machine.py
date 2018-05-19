@@ -20,6 +20,5 @@ class TestMachine(unittest.TestCase):
         gpio = fake_gpio.FakeGPIO()
         m = machine.Machine(gpio=gpio)
         assert len(m.triggers) == 0
-        event = mock.Mock()
-        m.create_trigger('test', 1, event)
+        m.create_trigger('test', 1, 0, 0)
         assert len(m.triggers) == 1

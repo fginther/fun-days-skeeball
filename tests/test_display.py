@@ -13,5 +13,5 @@ class TestDisplay(unittest.TestCase):
         pygame = mock.Mock()
         pygame.display = mock.Mock()
         pygame.display.list_modes = mock.Mock(return_value=resolutions)
-        d = display.Display(self.mock_config, pygame)
+        d = display.Display(self.mock_config, True, pygame)
         assert d.get_fullscreen_resolution() == resolutions[0]

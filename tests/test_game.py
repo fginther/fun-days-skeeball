@@ -38,7 +38,7 @@ class TestGame(unittest.TestCase):
         self.game.drop_ball(1)
         assert self.game.remaining_balls == 8
         assert 'Process drop_ball target: 1' in self.message_buffer
-        assert 'Score is now 10 (10)' in self.message_buffer
+        assert 'Score is now 50 (50)' in self.message_buffer
 
     def test_check_game_over(self):
         '''Ensure game is over when there are no remaining balls.'''
@@ -49,9 +49,9 @@ class TestGame(unittest.TestCase):
 
     def test_target(self):
         '''Ensure the expected point value is returned.'''
-        assert self.game.target(0) == 0
-        assert self.game.target(1) > 0
+        assert self.game.get_target_value(0) == 0
+        assert self.game.get_target_value(1) > 0
 
     def test_target_invalid_target(self):
         '''Hitting an invalid target number has a 0 point value.'''
-        assert self.game.target(10) == 0
+        assert self.game.get_target_value(10) == 0

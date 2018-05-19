@@ -8,7 +8,7 @@ import pygame
 
 class Display(object):
     '''The display interface.'''
-    def __init__(self, config, pygame=pygame):
+    def __init__(self, config, fullscreen=True, pygame=pygame):
         '''Initialize the display.'''
         logging.basicConfig(format='%(asctime)s %(message)s')
         self.logger = logging.getLogger(__name__)
@@ -16,9 +16,16 @@ class Display(object):
         self.pygame = pygame
         self.pygame.init()
 
-        width, height = self.get_fullscreen_resolution()
-        self.screen = self.pygame.display.set_mode(
-            [width, height], self.pygame.FULLSCREEN)
+        if fullscreen:
+            width, height = self.get_fullscreen_resolution()
+            self.screen = self.pygame.display.set_mode(
+                [width, height], self.pygame.FULLSCREEN)
+        else:
+            self.screen = pygame.display.set_mode((600, 600))
+            pygame.display.set_caption('skeeball')
+            background = pygame.Surface(self.screen.get_size())
+            background = background.convert()
+            background.fill((0, 0, 0))
 
         self.score_font = self.init_score_font()
 
