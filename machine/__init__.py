@@ -1,5 +1,6 @@
 '''Receive GPIO machine inputs.'''
 import logging
+import pygame
 
 try:
     import RPi.GPIO as GPIO
@@ -12,11 +13,14 @@ DEFAULT_BOUNCETIME = 1000
 
 class Machine(object):
     '''The arcade machine backend.'''
+    BASE_PIN = 20
+
     def __init__(self, gpio=GPIO):
         '''Initialize the machine.'''
         self.gpio = gpio
         logging.basicConfig(format='%(asctime)s %(message)s')
         self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.INFO)
         self.log(logging.INFO, 'Machine setup begin.')
         self.gpio.setmode(self.gpio.BCM)
         self.gpio.setwarnings(False)
@@ -27,9 +31,20 @@ class Machine(object):
         '''Machine specific event logger.'''
         self.logger.log(level, msg)
 
-    def create_trigger(self, name, pin, event):
+    def create_trigger(self, name, target, event_number, sub_event):
+        pin = self.BASE_PIN + target
+        event = pygame.event.Event(event_number, sub=sub_event)
         trigger = Trigger(self.gpio, self.logger, name, pin, event)
         self.triggers.append(trigger)
+        return trigger
+
+    def release_balls(self):
+        '''Activate the servo to release the balls'''
+        pass
+
+    def hold_balls(self):
+        '''Activate the servo to hold the balls'''
+        pass
 
 
 class Trigger(object):
@@ -49,6 +64,10 @@ class Trigger(object):
             bouncetime=bouncetime)
         self.log(logging.INFO, 'Configuring {} on pin {}.'.format(name, pin))
 
+    def __repr__(self):
+        return '[name: {}, pin: {}, event: {}]'.format(
+            self.name, self.pin, self.event)
+
     def log(self, level, msg):
         '''Trigger specific event logger.'''
         self.logger.log(level, msg)
@@ -56,4 +75,5 @@ class Trigger(object):
     def callback(self):
         '''GPIO event callback.'''
         self.log(logging.INFO, 'GPIO callback: {}'.format(self.name))
-        self.event.post()
+        self.log(logging.INFO, 'Event: {}'.format(self.event))
+        pygame.event.post(self.event)
