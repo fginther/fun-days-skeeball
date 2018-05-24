@@ -5,7 +5,6 @@ import pygame
 try:
     import RPi.GPIO as GPIO
 except RuntimeError:
-    raise
     # This module can't be imported, assume running in test context
     GPIO = None
 
