@@ -28,6 +28,7 @@ class Display(object):
             background.fill((0, 0, 0))
 
         self.score_font = self.init_score_font()
+        self.text_font = self.init_text_font()
 
         # Initialize the screen and background
         self.init_background()
@@ -62,11 +63,15 @@ class Display(object):
             font = self.pygame.font.SysFont('ubuntumono', 128)
         return font
 
+    def init_text_font(self):
+        font = self.pygame.font.SysFont('ubuntumono', 96)
+        return font
+
     def log(self, level, msg):
         '''Machine specific event logger.'''
         self.logger.log(level, msg)
 
-    def show_score(self, score):
+    def show_score(self, score, final=False):
         '''Show the current score.'''
         # Clear the background first
         background = self.pygame.Surface(self.screen.get_size())
@@ -81,6 +86,17 @@ class Display(object):
         textpos.centery = background.get_rect().centery
         # Blit the text surface onto the screen
         self.blit(text, textpos)
+
+        if final:
+            text = self.text_font.render('Final Score', 1, (250, 10, 10))
+            textpos = text.get_rect()
+            textpos.centerx = background.get_rect().centerx
+            textpos.centery = background.get_rect().centery - 150
+            self.blit(text, textpos)
+
+    def show_final_score(self, score):
+        '''Show the final score at the end of the game.'''
+        self.show_score(score, True)
 
     def show_high_scores(self, scores):
         '''Show the list of high scores.'''

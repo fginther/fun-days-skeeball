@@ -5,8 +5,6 @@ import time
 import yaml
 
 import cortex
-import display
-import machine
 
 
 def main():
@@ -21,12 +19,11 @@ def main():
         config = {}
     # Initialize the start-up machine state
     #mach = machine.Machine()
-    ctex = cortex.Cortex()
-    disp = display.Display(config, False)
+    ctex = cortex.Cortex(config)
     ctex.event_loop()
     return
     for score in range(0, 1001, 250):
-        disp.show_score(score)
+        #disp.show_score(score)
         time.sleep(1)
 
 
