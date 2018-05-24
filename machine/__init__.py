@@ -6,7 +6,8 @@ try:
     import RPi.GPIO as GPIO
 except RuntimeError:
     # This module can't be imported, assume running in test context
-    GPIO = None
+    import tests.fake_gpio
+    GPIO = tests.fake_gpio.FakeGPIO()
 
 DEFAULT_BOUNCETIME = 200
 
