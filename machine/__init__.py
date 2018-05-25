@@ -1,5 +1,7 @@
 '''Receive GPIO machine inputs.'''
 import logging
+import time
+
 import pygame
 
 try:
@@ -9,7 +11,7 @@ except RuntimeError:
     import tests.fake_gpio
     GPIO = tests.fake_gpio.FakeGPIO()
 
-DEFAULT_BOUNCETIME = 200
+DEFAULT_BOUNCETIME = 2000
 
 
 class Machine(object):
@@ -60,10 +62,10 @@ class Trigger(object):
         self.name = name
         self.pin = pin
         self.event = event
+        self.bouncetime = bouncetime
+        self.latched = False
+        self.latch_time = 0
         self.gpio.setup(pin, self.gpio.IN, pull_up_down=self.gpio.PUD_UP)
-        self.gpio.add_event_detect(
-            pin, self.gpio.FALLING, callback=self.callback,
-            bouncetime=bouncetime)
         self.log(logging.INFO, 'Configuring {} on pin {}.'.format(name, pin))
 
     def __repr__(self):
@@ -73,6 +75,30 @@ class Trigger(object):
     def log(self, level, msg):
         '''Trigger specific event logger.'''
         self.logger.log(level, msg)
+
+    def get_current_time(self):
+        return int(round(time.time() * 1000))
+
+    def poll(self):
+        '''Poll the status of this target.'''
+        state = GPIO.input(self.pin)
+        now = self.get_current_time()
+
+        # Perform debouncing by ensuring this does not trigger again until
+        # after the bouncetime
+        if self.latch_time + self.bouncetime > now:
+            return
+
+        # The target must also be clear for a minimum time before it can
+        # be triggered again
+        if self.latched and state == 1:
+            self.latched = False
+            return
+
+        if state == 0:
+            self.latched = True
+            self.latch_time = now
+            pygame.event.post(self.event)
 
     def callback(self, data):
         '''GPIO event callback.'''
