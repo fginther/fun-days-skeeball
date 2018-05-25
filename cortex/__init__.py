@@ -5,7 +5,6 @@ import logging
 import display
 import machine
 import game
-from tests import fake_gpio
 
 import pygame
 import time
@@ -34,7 +33,6 @@ class Cortex(object):
         self.logger.setLevel(logging.INFO)
         self.mode = OperationMode.ATTRACT
         self.game = game.Game()
-        #self.machine = machine.Machine(fake_gpio.FakeGPIO())
         self.machine = machine.Machine()
         self.display = display.Display(config, False)
 

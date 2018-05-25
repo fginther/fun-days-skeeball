@@ -44,13 +44,30 @@ class Game(object):
         self.log(logging.INFO, 'Process drop_ball target: {}'.format(target))
         value = self.get_target_value(target)
         self.score += value
-        self.remaining_balls -= 1
+        if target == 0:
+            # This is the special target which catches all balls
+            self.remaining_balls -= 1
+            self.pending_drops -= 1
+            if self.pending_drops < 0:
+                self.pending_drops = 0
+        else:
+            self.pending_drops += 1
         self.log(logging.INFO, 'Score is now {} ({})'.format(value, self.score))
         self.log(logging.INFO, 'Remaining balls: {}'.format(self.remaining_balls))
+        self.log(logging.INFO, 'Pending drops: {}'.format(self.pending_drops))
 
     def check_game_over(self):
-        '''Determine if the game is over.'''
-        if self.remaining_balls == 0:
+        '''Determine if the game is over.
+        
+        This will 'guess' that the game is over before the last ball passes
+        the catch-all target. This is done by keeping track of the balls that
+        it knows of passed the catch-all and those that have hit a scoring
+        target. If these add up to the total number of balls, the game is over.
+
+        This currently requires the balls to 'drain' into the next play area
+        before the next game starts.
+        '''
+        if self.remaining_balls - self.pending_drops == 0:
             self.game_over = True
             self.log(logging.INFO, 'Game is over.')
             return True
@@ -59,5 +76,6 @@ class Game(object):
     def start_game(self):
         self.score = 0
         self.remaining_balls = 9
+        self.pending_drops = 0
         self.game_over = False
         self.log(logging.INFO, 'Game is ready to start.')
