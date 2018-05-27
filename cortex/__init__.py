@@ -24,6 +24,9 @@ class Cortex(object):
     TARGET_EVENT = pygame.USEREVENT
     START_EVENT = pygame.USEREVENT + 1
     END_EVENT = pygame.USEREVENT + 2
+    POLL_EVENT = pygame.USEREVENT + 3
+
+    POLL_SPEED = 100
     
     def __init__(self, config):
         '''Initialize the Cortex.'''
@@ -54,6 +57,8 @@ class Cortex(object):
         self.log(logging.INFO, 'start_button: {}'.format(self.start_button))
         self.end_event = pygame.event.Event(self.END_EVENT)
         self.log(logging.INFO, 'end_event: {}'.format(self.end_event))
+
+        pygame.time.set_timer(self.POLL_EVENT, self.POLL_SPEED)
         pygame.init()
 
     def log(self, level, msg):
@@ -62,6 +67,12 @@ class Cortex(object):
 
     def get_current_time(self):
         return int(round(time.time() * 1000))
+
+    def poll_targets(self):
+        '''Poll for target events'''
+        #self.log(logging.INFO, 'poll triggered')
+        for target in self.targets:
+            target.poll()
 
     def play(self):
         '''Starts a new play of the currently selected game.'''
@@ -108,7 +119,7 @@ class Cortex(object):
 
             for event in pygame.event.get():
                 # Process global events first
-                self.log(logging.INFO, 'New event: {}'.format(event))
+                #self.log(logging.INFO, 'New event: {}'.format(event))
                 if event.type == pygame.QUIT:
                     self.log(logging.WARNING, 'QUITing the event loop')
                     return
@@ -128,6 +139,8 @@ class Cortex(object):
                     continue
                 if event.type == self.START_EVENT:
                     self.log(logging.INFO, 'START_BUTTON TRIGGERED')
+                if event.type == self.POLL_EVENT:
+                    self.poll_targets()
 
                 # Process events per specific mode
                 if self.mode == OperationMode.ATTRACT:
@@ -150,5 +163,5 @@ class Cortex(object):
                         continue
 
                 # Unhandled event
-                self.log(logging.ERROR, 'Unhandled event: {}'.format(
-                    event.type))
+                #self.log(logging.ERROR, 'Unhandled event: {}'.format(
+                #    event.type))
