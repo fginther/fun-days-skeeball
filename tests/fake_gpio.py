@@ -29,3 +29,6 @@ class FakeGPIO(object):
         pin['edge'] = edge
         pin['callback'] = callback
         pin['bouncetime'] = bouncetime
+
+    def input(self, pin):
+        return True
