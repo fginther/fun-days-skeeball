@@ -27,7 +27,7 @@ class Cortex(object):
     POLL_EVENT = pygame.USEREVENT + 3
 
     POLL_SPEED = 100
-    
+
     def __init__(self, config):
         '''Initialize the Cortex.'''
         logging.basicConfig(format='%(asctime)s %(message)s')
@@ -38,6 +38,8 @@ class Cortex(object):
         self.game = game.Game()
         self.machine = machine.Machine()
         self.display = display.Display(config, False)
+        self.last_target = 0
+        self.last_points = 0
 
         # Configure the targets and their event handlers
         self.targets = []
@@ -80,7 +82,7 @@ class Cortex(object):
         # Release the balls
         self.log(logging.INFO, 'play triggered')
         self.game.start_game()
-        self.display.show_score(self.game.score)
+        self.display.show_score(self.game.score, 0, 0, [])
         self.machine.release_balls()
         self.machine.hold_balls()
         self.mode = OperationMode.PLAY
@@ -88,8 +90,10 @@ class Cortex(object):
     def post_play(self):
         '''Start the post play period, presenting the last score.'''
         self.log(logging.INFO, 'post_play triggered')
+        bonus = []
         self.mode = OperationMode.POST_PLAY
-        self.display.show_final_score(self.game.score)
+        self.display.show_final_score(self.game.score, self.last_target,
+                                      self.last_points, bonus)
         # Display current ranking
         pass
 
@@ -102,13 +106,15 @@ class Cortex(object):
     def hit_target(self, event):
         '''Handler for processing target events.'''
         self.game.drop_ball(event.sub[0])
-        self.display.show_score(self.game.score)
-        points = event.sub[1]
+        target, points = event.sub
+        self.display.show_score(self.game.score, target, points, [])
         self.log(logging.INFO, 'Points: {}'.format(points))
         self.log(logging.INFO, 'Score: {}'.format(self.game.score))
         if self.game.check_game_over():
             self.log(logging.INFO, 'Posting end_event')
             pygame.event.post(self.end_event)
+        self.last_target = target
+        self.last_points = points
 
     def event_loop(self):
         '''The pygame event loop.'''
