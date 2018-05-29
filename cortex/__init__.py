@@ -76,6 +76,11 @@ class Cortex(object):
         for target in self.targets:
             target.poll()
 
+    def update_servo(self):
+        '''Update the servo position.'''
+        return
+        self.machine.check_duty_cycle()
+
     def play(self):
         '''Starts a new play of the currently selected game.'''
         # Display the new game screen
@@ -83,8 +88,7 @@ class Cortex(object):
         self.log(logging.INFO, 'play triggered')
         self.game.start_game()
         self.display.show_score(self.game.score, 0, 0, [])
-        self.machine.release_balls()
-        self.machine.hold_balls()
+        #self.machine.release_balls()
         self.mode = OperationMode.PLAY
 
     def post_play(self):
@@ -115,6 +119,7 @@ class Cortex(object):
             pygame.event.post(self.end_event)
         self.last_target = target
         self.last_points = points
+        #self.machine.hold_balls()
 
     def event_loop(self):
         '''The pygame event loop.'''
@@ -147,6 +152,8 @@ class Cortex(object):
                     self.log(logging.INFO, 'START_BUTTON TRIGGERED')
                 if event.type == self.POLL_EVENT:
                     self.poll_targets()
+                    # The servo control is untested
+                    #self.update_servo()
 
                 # Process events per specific mode
                 if self.mode == OperationMode.ATTRACT:

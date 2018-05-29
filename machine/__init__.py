@@ -17,6 +17,7 @@ DEFAULT_BOUNCETIME = 2000
 class Machine(object):
     '''The arcade machine backend.'''
     BASE_PIN = 20
+    SERVO_PIN = 12
 
     def __init__(self, gpio=GPIO):
         '''Initialize the machine.'''
@@ -29,6 +30,9 @@ class Machine(object):
         self.gpio.setwarnings(False)
         self.log(logging.INFO, 'Machine setup complete.')
         self.triggers = []
+        #self.duty_time = 0
+        #self.gpio.setup(self.SERVO_PIN, self.gpio.OUT)
+        #self.pwm = self.gpio.PWM(self.SERVO_PIN, 50)
         self.log(logging.INFO, 'GPIO: {}'.format(self.gpio))
 
     def log(self, level, msg):
@@ -42,13 +46,39 @@ class Machine(object):
         self.triggers.append(trigger)
         return trigger
 
+    def get_current_time(self):
+        return int(round(time.time() * 1000))
+
+    # The servo control is untested
+    def check_duty_cycle(self):
+        return
+        now = self.get_current_time()
+        if self.duty_time + 1000 > now:
+            self.turn_off_duty_cycle()
+            self.duty_time = 0
+
+    def turn_off_duty_cycle(self):
+        return
+        self.gpio.output(self.SERVO_PIN, False)
+        self.pwm.ChangeDutyCycle(0)
+
+    def set_angle(self, angle):
+        '''Sets the angle of the servo motor.'''
+        duty = angle / 18 + 2
+        self.gpio.output(self.SERVO_PIN, True)
+        self.pwm.ChangeDutyCycle(duty)
+
     def release_balls(self):
         '''Activate the servo to release the balls'''
-        pass
+        return
+        self.set_angle(90)
+        self.duty_time = self.get_current_time()
 
     def hold_balls(self):
         '''Activate the servo to hold the balls'''
-        pass
+        return
+        self.set_angle(0)
+        self.duty_time = self.get_current_time()
 
 
 class Trigger(object):
