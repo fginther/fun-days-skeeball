@@ -18,8 +18,9 @@ class Machine(object):
     '''The arcade machine backend.'''
     BASE_PIN = 20
     SERVO_PIN = 12
+    START_PIN = 19
 
-    def __init__(self, gpio=GPIO):
+    def __init__(self, start_event, gpio=GPIO):
         '''Initialize the machine.'''
         self.gpio = gpio
         logging.basicConfig(format='%(asctime)s %(message)s')
@@ -30,6 +31,13 @@ class Machine(object):
         self.gpio.setwarnings(False)
         self.log(logging.INFO, 'Machine setup complete.')
         self.triggers = []
+
+        self.bouncetime = DEFAULT_BOUNCETIME
+        self.start_latched = False
+        self.start_latch_time = 0
+        self.start_event = start_event
+        self.gpio.setup(self.START_PIN, self.gpio.IN,
+                        pull_up_down=self.gpio.PUD_UP)
         #self.duty_time = 0
         #self.gpio.setup(self.SERVO_PIN, self.gpio.OUT)
         #self.pwm = self.gpio.PWM(self.SERVO_PIN, 50)
@@ -45,6 +53,23 @@ class Machine(object):
         trigger = Trigger(self.gpio, self.logger, name, pin, event)
         self.triggers.append(trigger)
         return trigger
+
+    def poll(self):
+        '''Poll the status of the machine inputs.'''
+        state = GPIO.input(self.START_PIN)
+        now = self.get_current_time()
+
+        if self.start_latch_time + self.bouncetime > now:
+            return
+
+        if self.start_latched and state == 1:
+            self.start_latched = False
+            return
+
+        if state == 0:
+            self.start_latched = True
+            self.start_latch_time = now
+            pygame.event.post(self.start_event)
 
     def get_current_time(self):
         return int(round(time.time() * 1000))

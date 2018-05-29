@@ -26,7 +26,7 @@ class Cortex(object):
     END_EVENT = pygame.USEREVENT + 2
     POLL_EVENT = pygame.USEREVENT + 3
 
-    POLL_SPEED = 100
+    POLL_SPEED = 50
 
     def __init__(self, config):
         '''Initialize the Cortex.'''
@@ -36,7 +36,10 @@ class Cortex(object):
         self.logger.setLevel(logging.INFO)
         self.mode = OperationMode.ATTRACT
         self.game = game.Game()
-        self.machine = machine.Machine()
+
+        self.start_event = pygame.event.Event(self.START_EVENT)
+
+        self.machine = machine.Machine(self.start_event)
         self.display = display.Display(config, False)
         self.last_target = 0
         self.last_points = 0
@@ -54,9 +57,6 @@ class Cortex(object):
         self.log(logging.INFO, 'Cortex target list:')
         self.log(logging.INFO, self.targets)
 
-        start_event = self.START_EVENT
-        self.start_button = self.machine.create_trigger('start', -1, start_event, 0)
-        self.log(logging.INFO, 'start_button: {}'.format(self.start_button))
         self.end_event = pygame.event.Event(self.END_EVENT)
         self.log(logging.INFO, 'end_event: {}'.format(self.end_event))
 
@@ -72,9 +72,10 @@ class Cortex(object):
 
     def poll_targets(self):
         '''Poll for target events'''
-        #self.log(logging.INFO, 'poll triggered')
+        self.log(logging.INFO, 'poll triggered')
         for target in self.targets:
             target.poll()
+        self.machine.poll()
 
     def update_servo(self):
         '''Update the servo position.'''
